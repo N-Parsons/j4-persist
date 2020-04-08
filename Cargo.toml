@@ -1,0 +1,14 @@
+[package]
+name = "j4-persist"
+version = "0.1.0"
+authors = ["Nathan Parsons <github@tantalum.blue>"]
+edition = "2018"
+
+# See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
+
+[dependencies]
+i3ipc = {version = "^0.10.1", path = "../i3ipc-rs"}
+libnotify = "^1.0.3"
+quicli = "^0.4.0"
+structopt = "^0.3.12"
+
