@@ -19,11 +19,13 @@ struct Cli {
 
 fn main() -> CliResult {
     let args = Cli::from_args();
+    let cmd = args.cmd.as_ref();
 
     let mut i3 = I3Connection::connect()?;
+    let tree = i3.get_tree().unwrap();
+    let focused = get_focused(tree.nodes).expect("Focused container not found");
 
-    let mark = get_mark(&mut i3);
-    let cmd = args.cmd.as_ref();
+    let mark = get_mark(&focused);
 
     match mark {
         None => match cmd {
@@ -37,9 +39,7 @@ fn main() -> CliResult {
                     .icon("changes-prevent-symbolic.symbolic")
                     .show()?;
             }
-            "kill" => {
-                i3.run_command("kill").expect("Failed to kill window");
-            }
+            "kill" => safe_kill(focused, &mut i3),
             _ => return Ok(()),
         },
         Some(m) => match cmd {
@@ -75,17 +75,11 @@ fn get_nonce() -> u128 {
     };
 }
 
-fn get_mark(i3: &mut I3Connection) -> Option<String> {
-    let tree = i3.get_tree().unwrap();
-    let focused = get_focused(tree.nodes);
-
-    match focused {
-        Some(node) => match node.marks.iter().find(|m| m.starts_with("j4-persist_")) {
-            Some(m) => return Some(m.to_owned()),
-            None => return None,
-        },
-        None => panic!("Failed to get focused window"),
-    }
+fn get_mark(node: &Node) -> Option<String> {
+    match node.marks.iter().find(|m| m.starts_with("j4-persist_")) {
+        Some(m) => return Some(m.to_owned()),
+        None => return None,
+    };
 }
 
 /// Recursively iterate through nodes
@@ -93,7 +87,7 @@ fn get_focused(nodes: Vec<Node>) -> Option<Node> {
     // Loop through the nodes of this container
     for node in nodes {
         if node.focused {
-            // If we've found the focused window, return it
+            // If we've found the focused container, return it
             return Some(node);
         } else if node.focus.len() > 0 {
             // Only iterate the nodes if there is focus in this container
@@ -106,6 +100,19 @@ fn get_focused(nodes: Vec<Node>) -> Option<Node> {
     }
 
     // If nothing is found, return None
-    // I don't think this should be reached this shouldn't be reached
+    // I don't think this should be reached normally
     return None;
+}
+
+/// Safely kill only unprotected windows in the container
+fn safe_kill(node: Node, mut i3: &mut I3Connection) {
+    // Only perform the kill if no mark is set and there are no sub-nodes
+    if node.nodes.len() == 0 && get_mark(&node).is_none() {
+        let command = format!("[con_id={}] kill", node.id).to_owned();
+        i3.run_command(&command).expect("Failed to kill container");
+    } else {
+        for container in node.nodes {
+            safe_kill(container, &mut i3);
+        }
+    }
 }
