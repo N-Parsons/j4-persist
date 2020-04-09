@@ -11,7 +11,22 @@ If DBus isn't installed, the program should still perform the action, but will e
 
 If you want to disable notifications, you can build the crate with the `--no-default-features` flag.
 
-### Usage
+## Installation
+If you have a Rust toolchain set-up, you can build and install the program directly from this repo using [cargo install](https://doc.rust-lang.org/cargo/commands/cargo-install.html), which will install it to `~/.cargo/bin` by default.
+
+```sh
+cargo install --git https://github.com/N-Parsons/j4-persist j4-persist
+```
+
+If you don't have Rust set up yet, check out [rustup](https://rustup.rs/).
+
+### Binaries
+Binaries for `x86_64` Linux are available on the releases tab.
+
+These binaries are signed with my GPG key, which is available at [keybase.io/nparsons](https://keybase.io/nparsons) and can be imported trivially with
+`curl https://keybase.io/nparsons/pgp_keys.asc | gpg --import`. You can then verify the binary with `gpg --verify j4-persist.gpg`.
+
+## Usage
 ```
 j4-persist <command>`
 
@@ -50,21 +65,6 @@ If you've got a program that you want to automatically mark as persistent, the e
 ```
 for_window [class="X2GoAgent"] exec j4-persist lock
 ```
-
-## Installation
-If you have a Rust toolchain set-up, you can build and install the program directly from this repo using [cargo install](https://doc.rust-lang.org/cargo/commands/cargo-install.html), which will install it to `~/.cargo/bin` by default.
-
-```sh
-cargo install --git https://github.com/N-Parsons/j4-persist j4-persist
-```
-
-If you don't have Rust set up yet, check out [rustup](https://rustup.rs/).
-
-### Binaries
-Binaries for `x86_64` Linux are available on the releases tab.
-
-These binaries are signed with my GPG key, which is available at [keybase.io/nparsons](https://keybase.io/nparsons) and can be imported trivially with
-`curl https://keybase.io/nparsons/pgp_keys.asc | gpg --import`. You can then verify the binary with `gpg --verify j4-persist.gpg`.
 
 ## Acknowledgements
 This tool was inspired by [Igrom/i3-persist](https://github.com/Igrom/i3-persist) and some of the comments and suggestions made by users within issues and pull requests.
