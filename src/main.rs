@@ -5,7 +5,6 @@ use structopt::StructOpt;
 
 use i3ipc::reply::Node;
 use i3ipc::I3Connection;
-
 use notify_rust::Notification;
 
 /// Replacement for i3wm's built-in 'kill' command, with the ability to protect windows
@@ -63,7 +62,7 @@ fn main() -> CliResult {
     Ok(())
 }
 
-// Helper methods
+// Helper functions
 fn get_nonce() -> u128 {
     match SystemTime::now().duration_since(SystemTime::UNIX_EPOCH) {
         Ok(time) => return time.as_millis(),
@@ -71,16 +70,37 @@ fn get_nonce() -> u128 {
     };
 }
 
-fn get_mark(i3: &mut I3Connection) -> Option<&'static str> {
-    //    let marks = i3.get_marks();
-    //    let matching = marks.iter().filter(|m| m.starts_with("j4-persist_")).collect::<Vec<_>>();
+fn get_mark(i3: &mut I3Connection) -> Option<String> {
+    let tree = i3.get_tree().unwrap();
+    let focused = get_focused(tree.nodes);
 
-/*    println!(
-        "{:?}",
-        i3.get_tree().unwrap().nodes[1].nodes[1].nodes[1].nodes[1].marks
-    ); //.unwrap().nodes[1].nodes[1]); //.iter().filter(|n| n.focused));
-*/
-    return Some("j4-persist");
+    match focused {
+        Some(node) => match node.marks.iter().find(|m| m.starts_with("j4-persist_")) {
+            Some(m) => return Some(m.to_owned()),
+            None => return None,
+        },
+        None => panic!("Failed to get focused window"),
+    }
 }
 
-//fn get_focused(node: Node) -> Node
+/// Recursively iterate through nodes
+fn get_focused(nodes: Vec<Node>) -> Option<Node> {
+    // Loop through the nodes of this container
+    for node in nodes {
+        if node.focused {
+            // If we've found the focused window, return it
+            return Some(node);
+        } else if node.focus.len() > 0 {
+            // Only iterate the nodes if there is focus in this container
+            let sub_node = get_focused(node.nodes);
+            match sub_node {
+                Some(_) => return sub_node,
+                None => continue,
+            }
+        }
+    }
+
+    // If nothing is found, return None
+    // I don't think this should be reached this shouldn't be reached
+    return None;
+}

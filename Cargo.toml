@@ -7,7 +7,7 @@ edition = "2018"
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 
 [dependencies]
-i3ipc = {version = "^0.10.1", path = "../i3ipc-rs"}
+i3ipc = {git = "https://github.com/N-Parsons/i3ipc-rs", branch="marks"} # to be updated when changes merged upstream
 notify-rust = "3"
 quicli = "^0.4.0"
 structopt = "^0.3.12"

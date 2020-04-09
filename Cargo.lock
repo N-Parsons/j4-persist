@@ -367,6 +367,7 @@ dependencies = [
 [[package]]
 name = "i3ipc"
 version = "0.10.1"
+source = "git+https://github.com/N-Parsons/i3ipc-rs?branch=marks#3949883b4ae8e1c3f645b415699d991b6bc2a763"
 dependencies = [
  "byteorder",
  "log",
