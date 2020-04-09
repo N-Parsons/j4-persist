@@ -5,6 +5,8 @@ use structopt::StructOpt;
 
 use i3ipc::reply::Node;
 use i3ipc::I3Connection;
+
+#[cfg(feature = "notifications")]
 use notify_rust::Notification;
 
 /// Replacement for i3wm's built-in 'kill' command, with the ability to protect windows
@@ -29,6 +31,7 @@ fn main() -> CliResult {
                 i3.run_command(&format!("mark --add j4-persist_{}", get_nonce()))
                     .expect("Failed to set mark");
 
+                #[cfg(feature = "notifications")]
                 Notification::new()
                     .summary("Window protected")
                     .icon("changes-prevent-symbolic.symbolic")
@@ -44,12 +47,14 @@ fn main() -> CliResult {
                 i3.run_command(&format!("unmark {}", m))
                     .expect("Failed to unset mark");
 
+                #[cfg(feature = "notifications")]
                 Notification::new()
                     .summary("Window unprotected")
                     .icon("changes-allow-symbolic.symbolic")
                     .show()?;
             }
             "kill" => {
+                #[cfg(feature = "notifications")]
                 Notification::new()
                     .summary("Window is protected")
                     .icon("changes-prevent-symbolic.symbolic")
