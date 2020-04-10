@@ -50,7 +50,11 @@ fn main() -> CliResult {
                     .show()?;
             }
             "kill" => safe_kill(focused, &mut i3)?,
-            _ => return Err(failure::err_msg("Unknown command. Valid commands are: kill, lock, unlock, and toggle."))?,
+            _ => {
+                return Err(failure::err_msg(
+                    "Unknown command. Valid commands are: kill, lock, unlock, and toggle.",
+                ))?
+            }
         },
         Some(m) => match cmd {
             "unlock" | "toggle" => {
@@ -70,16 +74,22 @@ fn main() -> CliResult {
                     .icon("changes-prevent-symbolic.symbolic")
                     .show()?;
             }
-            _ => return Err(failure::err_msg("Unknown command. Valid commands are: kill, lock, unlock, and toggle."))?,
+            _ => {
+                return Err(failure::err_msg(
+                    "Unknown command. Valid commands are: kill, lock, unlock, and toggle.",
+                ))?
+            }
         },
     };
 
-    return Ok(())
+    return Ok(());
 }
 
 // Helper functions
 fn get_nonce() -> Result<u128, failure::Error> {
-    return Ok(SystemTime::now().duration_since(SystemTime::UNIX_EPOCH)?.as_millis());
+    return Ok(SystemTime::now()
+        .duration_since(SystemTime::UNIX_EPOCH)?
+        .as_millis());
 }
 
 fn get_mark(node: &Node) -> Option<String> {
@@ -125,7 +135,7 @@ fn safe_kill(node: Node, mut i3: &mut I3Connection) -> Result<(), failure::Error
     } else {
         for container in node.nodes {
             safe_kill(container, &mut i3)?;
-        };
+        }
     }
 
     return Ok(());
