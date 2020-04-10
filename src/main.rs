@@ -21,10 +21,20 @@ fn main() -> CliResult {
     let args = Cli::from_args();
     let cmd = args.cmd.as_ref();
 
+    // Initialise the connection to i3
     let mut i3 = I3Connection::connect()?;
-    let tree = i3.get_tree().unwrap();
-    let focused = get_focused(tree.nodes).expect("Focused container not found");
 
+    // Get the tree
+    let tree = i3.get_tree().unwrap();
+
+    // Extract the nodes and floating_nodes
+    let mut nodes = tree.nodes;
+    nodes.extend(tree.floating_nodes.iter().cloned());
+
+    // Find the focused container
+    let focused = get_focused(nodes).expect("Focused container not found");
+
+    // Get the mark set on the container
     let mark = get_mark(&focused);
 
     match mark {
@@ -40,7 +50,7 @@ fn main() -> CliResult {
                     .show()?;
             }
             "kill" => safe_kill(focused, &mut i3),
-            _ => return Ok(()),
+            _ => panic!("Unknown command"),
         },
         Some(m) => match cmd {
             "unlock" | "toggle" => {
@@ -60,7 +70,7 @@ fn main() -> CliResult {
                     .icon("changes-prevent-symbolic.symbolic")
                     .show()?;
             }
-            _ => return Ok(()),
+            _ => panic!("Unknown command"),
         },
     };
 
@@ -94,8 +104,15 @@ fn get_focused(nodes: Vec<Node>) -> Option<Node> {
             let sub_node = get_focused(node.nodes);
             match sub_node {
                 Some(_) => return sub_node,
-                None => continue,
-            }
+                None => (),  // Do nothing
+            };
+
+            // Also iterate floating_nodes
+            let floating_node = get_focused(node.floating_nodes);
+            match floating_node {
+                Some(_) => return floating_node,
+                None => (),  // Do nothing
+            };
         }
     }
 
