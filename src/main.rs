@@ -50,7 +50,7 @@ fn main() -> CliResult {
                     .show()?;
             }
             "kill" => safe_kill(focused, &mut i3)?,
-            _ => return Ok(Err(failure::err_msg("Unknown command. Valid commands are: kill, lock, unlock, and toggle."))?),
+            _ => return Err(failure::err_msg("Unknown command. Valid commands are: kill, lock, unlock, and toggle."))?,
         },
         Some(m) => match cmd {
             "unlock" | "toggle" => {
@@ -70,7 +70,7 @@ fn main() -> CliResult {
                     .icon("changes-prevent-symbolic.symbolic")
                     .show()?;
             }
-            _ => return Ok(Err(failure::err_msg("Unknown command. Valid commands are: kill, lock, unlock, and toggle."))?),
+            _ => return Err(failure::err_msg("Unknown command. Valid commands are: kill, lock, unlock, and toggle."))?,
         },
     };
 
