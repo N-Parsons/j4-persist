@@ -1,6 +1,6 @@
 [package]
 name = "j4-persist"
-version = "0.1.0"
+version = "0.1.1"
 authors = ["Nathan Parsons <github@tantalum.blue>"]
 edition = "2018"
 
