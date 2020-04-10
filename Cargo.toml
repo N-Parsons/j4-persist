@@ -11,6 +11,7 @@ i3ipc = {git = "https://github.com/N-Parsons/i3ipc-rs", branch="marks"} # to be 
 notify-rust = "3"
 quicli = "^0.4.0"
 structopt = "^0.3.12"
+failure = "^0.1.7"
 
 [features]
 default = ["notifications"]

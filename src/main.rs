@@ -1,5 +1,6 @@
 use std::time::SystemTime;
 
+use failure;
 use quicli::prelude::*;
 use structopt::StructOpt;
 
@@ -25,23 +26,22 @@ fn main() -> CliResult {
     let mut i3 = I3Connection::connect()?;
 
     // Get the tree
-    let tree = i3.get_tree().unwrap();
+    let tree = i3.get_tree()?;
 
     // Extract the nodes and floating_nodes
     let mut nodes = tree.nodes;
     nodes.extend(tree.floating_nodes.iter().cloned());
 
     // Find the focused container
-    let focused = get_focused(nodes).expect("Focused container not found");
+    let focused = get_focused(nodes)?;
 
-    // Get the mark set on the container
+    // Get the mark set on the focused container
     let mark = get_mark(&focused);
 
     match mark {
         None => match cmd {
             "lock" | "toggle" => {
-                i3.run_command(&format!("mark --add j4-persist_{}", get_nonce()))
-                    .expect("Failed to set mark");
+                i3.run_command(&format!("mark --add j4-persist_{}", get_nonce()?))?;
 
                 #[cfg(feature = "notifications")]
                 Notification::new()
@@ -49,8 +49,8 @@ fn main() -> CliResult {
                     .icon("changes-prevent-symbolic.symbolic")
                     .show()?;
             }
-            "kill" => safe_kill(focused, &mut i3),
-            _ => panic!("Unknown command"),
+            "kill" => safe_kill(focused, &mut i3)?,
+            _ => return Ok(Err(failure::err_msg("Unknown command. Valid commands are: kill, lock, unlock, and toggle."))?),
         },
         Some(m) => match cmd {
             "unlock" | "toggle" => {
@@ -70,19 +70,16 @@ fn main() -> CliResult {
                     .icon("changes-prevent-symbolic.symbolic")
                     .show()?;
             }
-            _ => panic!("Unknown command"),
+            _ => return Ok(Err(failure::err_msg("Unknown command. Valid commands are: kill, lock, unlock, and toggle."))?),
         },
     };
 
-    Ok(())
+    return Ok(())
 }
 
 // Helper functions
-fn get_nonce() -> u128 {
-    match SystemTime::now().duration_since(SystemTime::UNIX_EPOCH) {
-        Ok(time) => return time.as_millis(),
-        Err(_) => panic!("Failed to get current time"),
-    };
+fn get_nonce() -> Result<u128, failure::Error> {
+    return Ok(SystemTime::now().duration_since(SystemTime::UNIX_EPOCH)?.as_millis());
 }
 
 fn get_mark(node: &Node) -> Option<String> {
@@ -93,43 +90,43 @@ fn get_mark(node: &Node) -> Option<String> {
 }
 
 /// Recursively iterate through nodes
-fn get_focused(nodes: Vec<Node>) -> Option<Node> {
+fn get_focused(nodes: Vec<Node>) -> Result<Node, failure::Error> {
     // Loop through the nodes of this container
     for node in nodes {
         if node.focused {
             // If we've found the focused container, return it
-            return Some(node);
+            return Ok(node);
         } else if node.focus.len() > 0 {
             // Only iterate the nodes if there is focus in this container
+            // Iterate the non-floating nodes first - these are most likely
             let sub_node = get_focused(node.nodes);
-            match sub_node {
-                Some(_) => return sub_node,
-                None => (),  // Do nothing
-            };
+            if sub_node.is_ok() {
+                return sub_node;
+            }
 
-            // Also iterate floating_nodes
+            // Then iterate floating_nodes
             let floating_node = get_focused(node.floating_nodes);
-            match floating_node {
-                Some(_) => return floating_node,
-                None => (),  // Do nothing
-            };
+            if floating_node.is_ok() {
+                return floating_node;
+            }
         }
     }
 
-    // If nothing is found, return None
-    // I don't think this should be reached normally
-    return None;
+    // If nothing is found, return an Err
+    return Err(failure::err_msg("Focused node not found"));
 }
 
 /// Safely kill only unprotected windows in the container
-fn safe_kill(node: Node, mut i3: &mut I3Connection) {
+fn safe_kill(node: Node, mut i3: &mut I3Connection) -> Result<(), failure::Error> {
     // Only perform the kill if no mark is set and there are no sub-nodes
     if node.nodes.len() == 0 && get_mark(&node).is_none() {
         let command = format!("[con_id={}] kill", node.id).to_owned();
-        i3.run_command(&command).expect("Failed to kill container");
+        i3.run_command(&command)?;
     } else {
         for container in node.nodes {
-            safe_kill(container, &mut i3);
-        }
+            safe_kill(container, &mut i3)?;
+        };
     }
+
+    return Ok(());
 }
