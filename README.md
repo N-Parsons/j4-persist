@@ -12,6 +12,8 @@ If DBus isn't installed, the program should still perform the action, but will e
 If you want to disable notifications, you can build the crate with the `--no-default-features` flag.
 
 ## Installation
+
+### Cargo
 If you have a Rust toolchain set-up, you can build and install the program directly from this repo using [cargo install](https://doc.rust-lang.org/cargo/commands/cargo-install.html), which will install it to `~/.cargo/bin` by default.
 
 ```sh
@@ -19,6 +21,9 @@ cargo install --git https://github.com/N-Parsons/j4-persist j4-persist
 ```
 
 If you don't have Rust set up yet, check out [rustup](https://rustup.rs/).
+
+### AUR
+Arch and Manjaro users can install via the AUR using the package name `j4-persist`.
 
 ### Binaries
 Binaries for `x86_64` Linux are available on the releases tab.
