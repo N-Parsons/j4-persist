@@ -50,16 +50,13 @@ fn main() -> CliResult {
                     .show()?;
             }
             "kill" => safe_kill(focused, &mut i3)?,
-            _ => {
-                return Err(failure::err_msg(
-                    "Unknown command. Valid commands are: kill, lock, unlock, and toggle.",
-                ))?
-            }
+            _ => Err(failure::err_msg(
+                "Unknown command. Valid commands are: kill, lock, unlock, and toggle.",
+            ))?,
         },
         Some(m) => match cmd {
             "unlock" | "toggle" => {
-                i3.run_command(&format!("unmark {}", m))
-                    .expect("Failed to unset mark");
+                i3.run_command(&format!("unmark {}", m))?;
 
                 #[cfg(feature = "notifications")]
                 Notification::new()
@@ -74,29 +71,27 @@ fn main() -> CliResult {
                     .icon("changes-prevent-symbolic.symbolic")
                     .show()?;
             }
-            _ => {
-                return Err(failure::err_msg(
-                    "Unknown command. Valid commands are: kill, lock, unlock, and toggle.",
-                ))?
-            }
+            _ => Err(failure::err_msg(
+                "Unknown command. Valid commands are: kill, lock, unlock, and toggle.",
+            ))?,
         },
     };
 
-    return Ok(());
+    Ok(())
 }
 
 // Helper functions
 fn get_nonce() -> Result<u128, failure::Error> {
-    return Ok(SystemTime::now()
+    Ok(SystemTime::now()
         .duration_since(SystemTime::UNIX_EPOCH)?
-        .as_millis());
+        .as_millis())
 }
 
 fn get_mark(node: &Node) -> Option<String> {
-    match node.marks.iter().find(|m| m.starts_with("j4-persist_")) {
-        Some(m) => return Some(m.to_owned()),
-        None => return None,
-    };
+    node.marks
+        .iter()
+        .find(|m| m.starts_with("j4-persist_"))
+        .map(|m| m.to_owned())
 }
 
 /// Recursively iterate through nodes
@@ -109,21 +104,19 @@ fn get_focused(nodes: Vec<Node>) -> Result<Node, failure::Error> {
         } else if node.focus.len() > 0 {
             // Only iterate the nodes if there is focus in this container
             // Iterate the non-floating nodes first - these are most likely
-            let sub_node = get_focused(node.nodes);
-            if sub_node.is_ok() {
-                return sub_node;
+            if let Ok(sub_node) = get_focused(node.nodes) {
+                return Ok(sub_node);
             }
 
             // Then iterate floating_nodes
-            let floating_node = get_focused(node.floating_nodes);
-            if floating_node.is_ok() {
-                return floating_node;
+            if let Ok(floating) = get_focused(node.floating_nodes) {
+                return Ok(floating);
             }
         }
     }
 
     // If nothing is found, return an Err
-    return Err(failure::err_msg("Focused node not found"));
+    Err(failure::err_msg("Focused node not found"))
 }
 
 /// Safely kill only unprotected windows in the container
@@ -138,5 +131,5 @@ fn safe_kill(node: Node, mut i3: &mut I3Connection) -> Result<(), failure::Error
         }
     }
 
-    return Ok(());
+    Ok(())
 }
