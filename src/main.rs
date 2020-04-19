@@ -1,8 +1,7 @@
 use std::time::SystemTime;
 
+use clap::{App, AppSettings, SubCommand};
 use failure;
-use quicli::prelude::*;
-use structopt::StructOpt;
 
 use i3ipc::reply::Node;
 use i3ipc::I3Connection;
@@ -11,16 +10,22 @@ use i3ipc::I3Connection;
 use notify_rust::Notification;
 
 /// Replacement for i3wm's built-in 'kill' command, with the ability to protect windows
-#[derive(StructOpt)]
-struct Cli {
-    // Positional argument
-    /// Operation to run: kill, lock, unlock, toggle
-    cmd: String,
-}
+fn main() -> Result<(), failure::Error> {
+    // Set up the command line interface
+    let matches = App::new(env!("CARGO_PKG_NAME"))
+        .version(env!("CARGO_PKG_VERSION"))
+        .about(env!("CARGO_PKG_DESCRIPTION"))
+        .setting(AppSettings::ArgRequiredElseHelp)
+        .subcommand(SubCommand::with_name("kill").about("Kill the active container (if unlocked)"))
+        .subcommand(SubCommand::with_name("lock").about("Lock the active container"))
+        .subcommand(SubCommand::with_name("unlock").about("Unlock the active container"))
+        .subcommand(
+            SubCommand::with_name("toggle").about("Toggle the lock on the active container"),
+        )
+        .get_matches();
 
-fn main() -> CliResult {
-    let args = Cli::from_args();
-    let cmd = args.cmd.as_ref();
+    // Get the subcommand name
+    let cmd = matches.subcommand_name().unwrap();
 
     // Initialise the connection to i3
     let mut i3 = I3Connection::connect()?;
@@ -50,9 +55,14 @@ fn main() -> CliResult {
                     .show()?;
             }
             "kill" => safe_kill(focused, &mut i3)?,
-            _ => Err(failure::err_msg(
-                "Unknown command. Valid commands are: kill, lock, unlock, and toggle.",
-            ))?,
+            "unlock" => {
+                #[cfg(feature = "notifications")]
+                Notification::new()
+                    .summary("Window unprotected")
+                    .icon("changes-allow-symbolic.symbolic")
+                    .show()?;
+            }
+            _ => unreachable!(),
         },
         Some(m) => match cmd {
             "unlock" | "toggle" => {
@@ -71,9 +81,14 @@ fn main() -> CliResult {
                     .icon("changes-prevent-symbolic.symbolic")
                     .show()?;
             }
-            _ => Err(failure::err_msg(
-                "Unknown command. Valid commands are: kill, lock, unlock, and toggle.",
-            ))?,
+            "lock" => {
+                #[cfg(feature = "notifications")]
+                Notification::new()
+                    .summary("Window protected")
+                    .icon("changes-prevent-symbolic.symbolic")
+                    .show()?;
+            }
+            _ => unreachable!(),
         },
     };
 
