@@ -1,9 +1,12 @@
 [package]
 name = "j4-persist"
 version = "0.1.3"
-authors = ["Nathan Parsons <github@tantalum.blue>"]
-edition = "2018"
 description = "Replacement for i3wm's built-in 'kill' command, with the ability to protect containers"
+authors = ["Nathan Parsons <github@tantalum.blue>"]
+readme = "README.md"
+license = "MIT"
+edition = "2018"
+
 
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 
