@@ -46,9 +46,11 @@ In your i3 config you now set your bind to call `exec j4-persist kill`, and add 
 
 ```
 # kill focused window
-bindsym $mod+Shift+q kill  # I don't normally use this shortcut, so this lets me kill protected windows
 bindsym $mod+Delete exec j4-persist kill
 bindsym $mod+Shift+Delete exec j4-persist toggle
+
+# kill focused window without checking if it's protected
+bindsym $mod+Shift+q kill
 
 
 # set states for j4-persist
